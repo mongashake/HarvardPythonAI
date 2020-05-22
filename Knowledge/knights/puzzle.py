@@ -35,8 +35,8 @@ knowledge0 = And(
     *structureA,
 
     #claim
-    Implication(AKnight, *puzzle0ClaimA),
-    Implication(AKnave, Not(*puzzle0ClaimA)),
+    Biconditional(AKnight, *puzzle0ClaimA),
+    Biconditional(AKnave, Not(*puzzle0ClaimA)),
 )
 
 # Puzzle 1
@@ -48,8 +48,8 @@ knowledge1 = And(
     *structureAB,
 
     # claim
-    Implication(AKnight, *puzzle1ClaimA),
-    Implication(AKnave, Not(*puzzle1ClaimA))
+    Biconditional(AKnight, *puzzle1ClaimA),
+    Biconditional(AKnave, Not(*puzzle1ClaimA))
 )
 
 # Puzzle 2
@@ -62,10 +62,10 @@ knowledge2 = And(
     *structureAB,
 
     # claim
-    Implication(AKnight, *puzzle2claimA),
-    Implication(AKnave, Not(*puzzle2claimA)),
-    Implication(BKnight, *puzzle2claimB),
-    Implication(BKnave, Not(*puzzle2claimB))
+    Biconditional(AKnight, *puzzle2claimA),
+    Biconditional(AKnave, Not(*puzzle2claimA)),
+    Biconditional(BKnight, *puzzle2claimB),
+    Biconditional(BKnave, Not(*puzzle2claimB))
 )
 
 # Puzzle 3
@@ -74,7 +74,7 @@ knowledge2 = And(
 # B says "C is a knave."
 # C says "A is a knight."
 puzzle3claimA = (Or(AKnight, AKnave),)
-puzzle3claimB = (Implication(*puzzle3claimA, AKnave),)
+puzzle3claimB = (Biconditional(*puzzle3claimA, AKnave),)
 puzzle3claimB = (And(*puzzle3claimB, CKnave),)
 puzzle3claimC = (AKnight,)
 knowledge3 = And(
@@ -82,12 +82,12 @@ knowledge3 = And(
     *structureABC,
 
     # claim
-    Implication(AKnight, *puzzle3claimA),
-    Implication(AKnave, Not(*puzzle3claimA)),
-    Implication(BKnight, *puzzle3claimB),
-    Implication(BKnave, Not(*puzzle3claimB)),
-    Implication(CKnight, *puzzle3claimC),
-    Implication(CKnave, Not(*puzzle3claimC)),
+    Biconditional(AKnight, *puzzle3claimA),
+    Biconditional(AKnave, Not(*puzzle3claimA)),
+    Biconditional(BKnight, *puzzle3claimB),
+    Biconditional(BKnave, Not(*puzzle3claimB)),
+    Biconditional(CKnight, *puzzle3claimC),
+    Biconditional(CKnave, Not(*puzzle3claimC)),
 )
 
 

@@ -9,13 +9,30 @@ BKnave = Symbol("B is a Knave")
 CKnight = Symbol("C is a Knight")
 CKnave = Symbol("C is a Knave")
 
+# structure claims two sentences:
+# 1. Every person is either a Knight or a Knave
+# 2. No person can be both
+structureA = (
+    Or(AKnight, AKnave),
+    Not(And(AKnight, AKnight)),
+    )
+
+structureAB = (
+    And(Or(AKnight, AKnave), Or(BKnight, BKnave)),
+    Not(Or(And(AKnight, AKnave), And(BKnight, BKnave))),
+    )
+
+structureABC = (
+    And(Or(AKnight, AKnave), Or(BKnight, BKnave), Or(CKnight, CKnave)),
+    Not(Or(And(AKnight, AKnave), And(BKnight, BKnave), And(CKnight, CKnave))),
+    )
+
 # Puzzle 0
 # A says "I am both a knight and a knave."
 puzzle0ClaimA = (And(AKnight, AKnave),)
 knowledge0 = And(
     # structure
-    Or(AKnight, AKnave),
-    Not(And(AKnight, AKnight)),
+    *structureA,
 
     #claim
     Implication(AKnight, *puzzle0ClaimA),
@@ -28,8 +45,7 @@ knowledge0 = And(
 puzzle1ClaimA = (And(AKnave, BKnave),)
 knowledge1 = And(
     # structure
-    And(Or(AKnight, AKnave), Or(BKnight, BKnave)),
-    Not(Or(And(AKnight, AKnight), And(BKnight, BKnave))),
+    *structureAB,
 
     # claim
     Implication(AKnight, *puzzle1ClaimA),
@@ -43,8 +59,7 @@ puzzle2claimA = (Or(And(AKnight, BKnight), And(AKnave, BKnave)),)
 puzzle2claimB = (Or(And(AKnight, BKnave), And(AKnave, BKnight)),)
 knowledge2 = And(
     # structure
-    And(Or(AKnight, AKnave), Or(BKnight, BKnave)),
-    Not(Or(And(AKnight, AKnave), And(BKnight, BKnave))),
+    *structureAB,
 
     # claim
     Implication(AKnight, *puzzle2claimA),
@@ -64,8 +79,7 @@ puzzle3claimB = (And(*puzzle3claimB, CKnave),)
 puzzle3claimC = (AKnight,)
 knowledge3 = And(
     # structure
-    And(Or(AKnight, AKnave), Or(BKnight, BKnave), Or(CKnight, CKnave)),
-    Not(Or(And(AKnight, AKnave), And(BKnight, BKnave), And(CKnight, CKnave))),
+    *structureABC,
 
     # claim
     Implication(AKnight, *puzzle3claimA),

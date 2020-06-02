@@ -1,6 +1,6 @@
 import itertools
 import random
-
+from copy import deepcopy
 
 class Minesweeper():
     """
@@ -123,7 +123,7 @@ class Sentence():
         a cell is known to be a mine.
         """
         if cell in self.cells:
-            self.cells -= set(cell)
+            self.cells.remove(cell)
             self.count -= 1
 
     def mark_safe(self, cell):
@@ -132,7 +132,12 @@ class Sentence():
         a cell is known to be safe.
         """
         if cell in self.cells:
-            self.cells -= set(cell)
+            self.cells.remove(cell)
+
+    def is_empty(self):
+        if any(self.__dict__.values()):
+            return False
+        return True
 
 
 class MinesweeperAI():
@@ -200,25 +205,23 @@ class MinesweeperAI():
         sentence = Sentence(neighbours, count)
         self.knowledge.append(sentence)
 
+        for each_cell in sentence.cells.copy():
+            if each_cell in self.safes:
+                sentence.mark_safe(each_cell)
+            elif each_cell in self.mines:
+                sentence.mark_mine(each_cell)
+
         if sentence.known_safes():
-            for cell in sentence.cells:
-                self.mark_safe(cell)
+            for each_cell in sentence.cells.copy():
+                self.mark_safe(each_cell)
 
         elif sentence.known_mines():
-            for cell in sentence.cells:
-                self.mark_mine(cell)
+            for each_cell in sentence.cells.copy():
+                self.mark_mine(each_cell)
 
-        for line in self.knowledge:
-            if line == sentence:
+        for line in self.knowledge.copy():
+            if line == sentence or sentence.is_empty() or line.is_empty():
                 continue
-
-            elif line.known_safes():
-                for each_cell in line.cells.intersection(sentence.cells):
-                    sentence.mark_safe(each_cell)
-
-            elif line.known_mines():
-                for each_cell in line.cells.intersection(sentence.cells):
-                    sentence.mark_mine(each_cell)
 
             elif line.cells.issubset(sentence.cells):
                 self.knowledge.append(Sentence(
@@ -232,6 +235,30 @@ class MinesweeperAI():
                                     line.count - sentence.count
                                     ))
 
+        self.mark_additional_cells()
+        self.clean_knowledge()
+
+    def mark_additional_cells(self):
+        for line in self.knowledge:
+            if line.is_empty():
+                continue
+
+            if line.known_safes():
+                for each_cell in line.cells.copy():
+                    self.mark_safe(each_cell)
+                self.mark_additional_cells()
+
+            elif line.known_mines():
+                for each_cell in line.cells.copy():
+                    self.mark_mine(each_cell)
+                self.mark_additional_cells()
+
+    def clean_knowledge(self):
+        for line in self.knowledge.copy():
+            if line.is_empty():
+                self.knowledge.remove(line)
+
+
     def find_neighbours(self, cell):
         # find all neighbours of a cell: up, down, left, right and diagonally.
         # 8 possible neighbours for a cell not touching the wall.
@@ -243,7 +270,6 @@ class MinesweeperAI():
                     continue
 
                 if 0 <= i < self.height and 0 <= j < self.width\
-                and (i,j) not in self.safes and (i,j) not in self.mines\
                 and (i,j) not in self.moves_made:
                     neighbours.add((i,j))
         return neighbours

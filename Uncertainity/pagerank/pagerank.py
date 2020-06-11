@@ -2,6 +2,8 @@ import os
 import random
 import re
 import sys
+from collections import Counter
+from math import isclose
 
 DAMPING = 0.85
 SAMPLES = 10000
@@ -57,8 +59,29 @@ def transition_model(corpus, page, damping_factor):
     linked to by `page`. With probability `1 - damping_factor`, choose
     a link at random chosen from all pages in the corpus.
     """
-    raise NotImplementedError
+    distribution = {}
 
+    links_on_page: set = corpus.get(page, set())
+
+    ## if no links on page, randomize from all pages in corpus
+    if not links_on_page:
+        distribution = {each_page: 1/len(corpus) for each_page in corpus.keys()}
+        assert sum(distribution.values()) == 1.0
+        return distribution
+
+    ## remove link to itself
+    if page in links_on_page:
+        links_on_page.remove(page)
+
+    distribution = {each_page: damping_factor/len(links_on_page) for each_page in links_on_page}
+    for each_page in corpus.keys():
+        if each_page in distribution:
+            distribution[each_page] += (1 - damping_factor)/len(corpus)
+        else:
+            distribution[each_page] = (1 - damping_factor)/len(corpus)
+
+    assert isclose(sum(distribution.values()), 1.0)
+    return distribution
 
 def sample_pagerank(corpus, damping_factor, n):
     """
@@ -69,7 +92,35 @@ def sample_pagerank(corpus, damping_factor, n):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    raise NotImplementedError
+
+    pagerank = []
+    start = random.choice(list(corpus.keys()))
+    pagerank.append(start)
+    transition = transition_model(corpus, start, damping_factor)
+    samples = n
+    samples -= 1
+
+    while samples > 0:
+        cumulative_transition = {}
+        jump = 0
+
+        ## create cumulative distribution
+        for each_page, probability in transition.items():
+            jump += probability
+            cumulative_transition[each_page] = jump
+    
+        choose = random.random()
+        for each_page, probability in cumulative_transition.items():
+            if choose <= probability:
+                pagerank.append(each_page)
+                transition = transition_model(corpus, each_page, damping_factor)
+                break
+
+        samples -= 1
+
+    pagerank = Counter(pagerank)
+    pagerank = {k: v/n for k,v in pagerank.items()}
+    return pagerank
 
 
 def iterate_pagerank(corpus, damping_factor):
@@ -81,8 +132,42 @@ def iterate_pagerank(corpus, damping_factor):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    raise NotImplementedError
 
+    accuracy = 0.001
+    def numlinks(page):
+        return len(corpus.get(page))
+
+    def pr(page):
+        ## primary pagerank algorithm
+
+        rank = (1 - damping_factor) / len(inverse_corpus) +\
+        damping_factor * sum([pagerank.get(curr_page) / numlinks(curr_page)\
+                            for curr_page in inverse_corpus.get(page, set())])
+        return rank
+
+    ## inverse_corpus -> key: page, value: set of all pages that link to key
+    inverse_corpus = {curr_page: set() for curr_page in corpus.keys()}
+    for curr_page, links in corpus.items():
+        if not links:
+            links = set(corpus.keys())
+            corpus[curr_page] = links
+
+        for link in links:
+            inverse_corpus[link].add(curr_page)
+
+    pagerank = {curr_page: 1/len(corpus) for curr_page in corpus.keys()}
+    diff = []
+    while True:
+        for curr_page, curr_rank in pagerank.items():
+            updated_pr = pr(curr_page)
+            diff.append(isclose(curr_rank, updated_pr, rel_tol=accuracy))
+            pagerank[curr_page] = updated_pr
+
+        if all(diff) and isclose(sum(pagerank.values()), 1.0):
+            break
+        diff = []
+
+    return pagerank
 
 if __name__ == "__main__":
     main()

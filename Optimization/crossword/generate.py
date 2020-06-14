@@ -1,7 +1,7 @@
 import sys
 
 from crossword import *
-
+from copy import deepcopy
 
 class CrosswordCreator():
 
@@ -270,21 +270,41 @@ class CrosswordCreator():
 
         If no assignment is possible, return None.
         """
+        # breakpoint()
         if self.assignment_complete(assignment):
             return assignment
 
         var = self.select_unassigned_variable(assignment)
         for value in self.order_domain_values(var, assignment):
             assignment[var] = value
+            inferences = dict()
             if self.consistent(assignment):
+                arcs = [(neighbor, var) for neighbor in self.crossword.neighbors(var)
+                if neighbor not in assignment]
+
+                self.inference(arcs, assignment.copy(), inferences, deepcopy(self.domains))
+                assignment.update(inferences.items())
                 result = self.backtrack(assignment)
                 if result:
                     return result
 
             assignment.pop(var)
+            for key in inferences:
+                assignment.remove(key)
 
         return None
 
+    def inference(self, arcs, assignment, inferences, domains):
+        self.ac3(arcs)
+        for variable, domain_values in domains.items():
+            if variable in assignment:
+                continue
+            if len(domain_values) == 1:
+                inferences[variable] = next(iter(domain_values))
+                assignment[variable] = next(iter(domain_values))
+                arcs.append((variable, var))
+                self.inference(arcs, assignment, inferences, domains)
+            
 
 def main():
 

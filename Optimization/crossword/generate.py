@@ -200,6 +200,7 @@ class CrosswordCreator():
         # ruled_out = set(assignment.values())
         # return [value for value in self.domains[var] if value not in ruled_out]
 
+        # Least constraining values heuristic
         domain_values = {}
         neighbors = self.crossword.neighbors(var)
         overlaps = {neighbor: self.crossword.overlaps[var, neighbor]
@@ -270,41 +271,72 @@ class CrosswordCreator():
 
         If no assignment is possible, return None.
         """
-        # breakpoint()
         if self.assignment_complete(assignment):
             return assignment
 
         var = self.select_unassigned_variable(assignment)
+        # count_values = len(self.domains[var])
         for value in self.order_domain_values(var, assignment):
             assignment[var] = value
-            inferences = dict()
+            # inferences = dict()
             if self.consistent(assignment):
-                arcs = [(neighbor, var) for neighbor in self.crossword.neighbors(var)
-                if neighbor not in assignment]
+                # arcs = [(neighbor, var) for neighbor in self.crossword.neighbors(var)
+                # if neighbor not in assignment]
 
-                self.inference(arcs, assignment.copy(), inferences, deepcopy(self.domains))
-                assignment.update(inferences.items())
+                # if count_values < 100 and\
+                # not self.inference(arcs, assignment.copy(), inferences, deepcopy(self.domains)):
+                #     continue
+                # count_values -= 1
+                # assignment.update(inferences.items())
                 result = self.backtrack(assignment)
                 if result:
                     return result
 
             assignment.pop(var)
-            for key in inferences:
-                assignment.remove(key)
+            # for key in inferences:
+            #     assignment.pop(key)
 
         return None
 
     def inference(self, arcs, assignment, inferences, domains):
-        self.ac3(arcs)
-        for variable, domain_values in domains.items():
-            if variable in assignment:
+        if all([item[0] in assignment for item in arcs]):
+            return True
+
+        # print(arcs)
+        for arc in arcs:
+            neighbor, var = arc
+            domain_values = domains[neighbor]
+            if neighbor in assignment:
                 continue
-            if len(domain_values) == 1:
-                inferences[variable] = next(iter(domain_values))
-                assignment[variable] = next(iter(domain_values))
-                arcs.append((variable, var))
-                self.inference(arcs, assignment, inferences, domains)
-            
+
+            overlap = self.crossword.overlaps[var, neighbor]
+
+            # overlap must always be there as arcs only contains neighbors
+            i_pos, j_pos = overlap
+
+            domain_values = [value for value in domain_values\
+            if assignment[var][i_pos] == value[j_pos]]
+
+            if not domain_values:
+                return False
+
+            domain_iter = iter(domain_values)
+            # domain_iter = iter(self.order_domain_values(neighbor, assignment))
+            latest_infer = next(domain_iter)
+
+            while latest_infer in set(assignment.values()):
+                try:
+                    latest_infer = next(domain_iter)
+                except StopIteration:
+                    return False
+
+            inferences[neighbor] = latest_infer
+            assignment[neighbor] = latest_infer
+            domains[neighbor] = domain_values
+
+        # breakpoint()
+        return self.inference(arcs, assignment, inferences, domains)
+
 
 def main():
 

@@ -59,7 +59,25 @@ def load_data(filename):
     labels should be the corresponding list of labels, where each label
     is 1 if Revenue is true, and 0 otherwise.
     """
-    raise NotImplementedError
+    months = {'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'June': 5, 'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11}
+    evidence = []
+    labels = []
+    with open(filename) as file:
+        reader = csv.reader(file)
+        next(reader)
+
+        for row in reader:
+            evidence_row = []
+            evidence_row.extend(row[:10])
+            evidence_row.append(months[row[10]])
+            evidence_row.extend(row[11:14])
+            evidence_row.append(1 if row[15] == 'Returning_Visitor' else 0)
+            evidence_row.append(1 if row[16] == 'TRUE' else 0)
+
+            evidence.append(evidence_row)
+            labels.append(row[17])
+    breakpoint()
+    return (evidence, labels)
 
 
 def train_model(evidence, labels):

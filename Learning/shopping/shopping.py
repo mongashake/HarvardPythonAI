@@ -62,21 +62,34 @@ def load_data(filename):
     months = {'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'June': 5, 'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11}
     evidence = []
     labels = []
+
     with open(filename) as file:
         reader = csv.reader(file)
         next(reader)
 
         for row in reader:
             evidence_row = []
-            evidence_row.extend(row[:10])
+            evidence_row.append(int(row[0]))
+            evidence_row.append(float(row[1]))
+            evidence_row.append(int(row[2]))
+            evidence_row.append(float(row[3]))
+            evidence_row.append(int(row[4]))
+            evidence_row.append(float(row[5]))
+            evidence_row.append(float(row[6]))
+            evidence_row.append(float(row[7]))
+            evidence_row.append(float(row[8]))
+            evidence_row.append(float(row[9]))
             evidence_row.append(months[row[10]])
-            evidence_row.extend(row[11:14])
+            evidence_row.append(int(row[11]))
+            evidence_row.append(int(row[12]))
+            evidence_row.append(int(row[13]))
+            evidence_row.append(int(row[14]))
             evidence_row.append(1 if row[15] == 'Returning_Visitor' else 0)
             evidence_row.append(1 if row[16] == 'TRUE' else 0)
 
             evidence.append(evidence_row)
-            labels.append(row[17])
-    breakpoint()
+            labels.append(1 if row[17] == 'TRUE' else 0)
+
     return (evidence, labels)
 
 
@@ -85,7 +98,10 @@ def train_model(evidence, labels):
     Given a list of evidence lists and a list of labels, return a
     fitted k-nearest neighbor model (k=1) trained on the data.
     """
-    raise NotImplementedError
+    model = KNeighborsClassifier(n_neighbors=1)
+    model.fit(evidence, labels)
+
+    return model
 
 
 def evaluate(labels, predictions):
@@ -103,7 +119,19 @@ def evaluate(labels, predictions):
     representing the "true negative rate": the proportion of
     actual negative labels that were accurately identified.
     """
-    raise NotImplementedError
+    true_positive = 0
+    true_negative = 0
+
+    for label, prediction in zip(labels, predictions):
+        if prediction and label:
+            true_positive += 1
+        elif not prediction and not label:
+            true_negative += 1
+
+    sensitivity = true_positive / labels.count(1)
+    specificity = true_negative / labels.count(0)
+
+    return (sensitivity, specificity)
 
 
 if __name__ == "__main__":

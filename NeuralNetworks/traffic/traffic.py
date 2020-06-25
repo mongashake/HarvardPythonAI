@@ -58,7 +58,25 @@ def load_data(data_dir):
     be a list of integer labels, representing the categories for each of the
     corresponding `images`.
     """
-    raise NotImplementedError
+    images = []
+    labels = []
+
+    datadir = os.path.abspath(data_dir)
+    for category in range(NUM_CATEGORIES):
+        category_dir = os.path.abspath(os.path.join(datadir, str(category)))
+        for imgname in os.listdir(category_dir):
+            imgname = os.path.abspath(os.path.join(category_dir, imgname))
+            image = cv2.imread(imgname)
+            image = cv2.resize(image, (IMG_WIDTH, IMG_HEIGHT))
+
+            if not image.shape == (IMG_WIDTH, IMG_HEIGHT, 3) or not type(image) == np.ndarray:
+                raise Exception('Image properties not supported.')
+            
+            images.append(image)
+            labels.append(category)
+
+    print('processed all images..')
+    return (images, labels)
 
 
 def get_model():
@@ -67,7 +85,36 @@ def get_model():
     `input_shape` of the first layer is `(IMG_WIDTH, IMG_HEIGHT, 3)`.
     The output layer should have `NUM_CATEGORIES` units, one for each category.
     """
-    raise NotImplementedError
+    input_shape = (IMG_WIDTH, IMG_HEIGHT, 3)
+    model = tf.keras.models.Sequential(
+        [
+            # input layer
+            tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=input_shape),
+
+            tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=input_shape),
+            tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+
+            tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=input_shape),
+            tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+
+            # Flatten
+            tf.keras.layers.Flatten(),
+            tf.keras.layers.Dense(512, activation='relu'),
+            tf.keras.layers.Dense(128, activation='relu'),
+            tf.keras.layers.Dropout(0.4),
+
+            # output layer
+            tf.keras.layers.Dense(NUM_CATEGORIES, activation='softmax'),
+        ]
+    )
+    model.compile(
+        optimizer="adam",
+        loss="categorical_crossentropy",
+        metrics=["accuracy"]
+    )
+    print(model.summary())
+
+    return model
 
 
 if __name__ == "__main__":
